@@ -33,6 +33,10 @@ from app.services.explainability.engine import explainability_engine
 
 @app.on_event("startup")
 async def startup_event():
+    # Load CSV Dataset into memory cache
+    from app.services.dataset_cache import DatasetCache
+    DatasetCache.load()
+    
     # Start background consumer loops
     await context_engine.start()
     await prediction_engine.start()

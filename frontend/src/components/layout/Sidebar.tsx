@@ -12,7 +12,8 @@ import {
   FileSearch, 
   Database,
   Settings,
-  Hexagon
+  Hexagon,
+  Network
 } from "lucide-react"
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Digital Twin', href: '/digital-twin', icon: Cpu },
   { name: 'Timeline', href: '/timeline', icon: Clock },
   { name: 'Decision Intel', href: '/decision', icon: ShieldCheck },
+  { name: 'Correlations', href: '/correlations', icon: Network },
   { name: 'Explainability', href: '/explainability', icon: FileSearch },
   { name: 'Knowledge Base', href: '/knowledge-base', icon: Database },
   { name: 'Settings', href: '/settings', icon: Settings },

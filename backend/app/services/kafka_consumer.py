@@ -47,11 +47,12 @@ class KafkaConsumerClient:
 
             while self._running:
                 # Use to_thread to prevent blocking the main asyncio event loop
-                msg = await asyncio.to_thread(self.consumer.poll, 0.1)
+                # poll(0) is non-blocking, so the thread is immediately returned to the pool
+                msg = await asyncio.to_thread(self.consumer.poll, 0)
                 
                 if msg is None:
-                    # Small sleep to prevent tight loop if polling returns immediately
-                    await asyncio.sleep(0.01)
+                    # Sleep to prevent tight loop and allow other tasks to run
+                    await asyncio.sleep(0.5)
                     continue
 
                 if msg.error():

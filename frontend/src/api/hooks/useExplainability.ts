@@ -46,6 +46,7 @@ export interface ExplainabilityWorkspaceData {
   decisionConfidence: number;
   engineeringRationale: string;
   safetyValidation: string;
+  shapValues: { feature: string; impact: number }[];
   supportingEvidence: string[];
   auditHash: string;
   decisionTrace: DecisionTraceStep[];
@@ -60,6 +61,13 @@ const MOCK_WORKSPACE_DATA: ExplainabilityWorkspaceData = {
   decisionConfidence: 93.2,
   engineeringRationale: "The M10 fusion algorithm successfully validated the M6 setpoint recommendation across all constraints, utilizing the M9 Digital Twin for final thermodynamic verification.",
   safetyValidation: "PASSED",
+  shapValues: [
+      {feature: "Steam Pressure", impact: 35.2},
+      {feature: "Machine Speed", impact: 27.5},
+      {feature: "Stock Consistency", impact: -15.4},
+      {feature: "Refiner Load", impact: 12.1},
+      {feature: "Moisture", impact: 9.8}
+  ],
   supportingEvidence: [
     "shap_analysis_55.json",
     "sim_trajectory_v2.csv",
@@ -102,7 +110,14 @@ export const useExplainabilityWorkspaceData = () => {
     queryKey: EXPLAINABILITY_QUERY_KEYS.workspace(),
     queryFn: async () => {
       try {
-        throw new Error('Backend endpoint not implemented yet');
+        const rawUrl = import.meta.env.VITE_API_URL;
+        const baseUrl = rawUrl ? `${rawUrl}/api/v1` : 'http://localhost:8000/api/v1';
+        const response = await fetch(`${baseUrl}/explainability/workspace`);
+        if (!response.ok) {
+          throw new Error('Backend endpoint returned error');
+        }
+        const data = await response.json();
+        return data as ExplainabilityWorkspaceData;
       } catch (error) {
         console.info('Backend unavailable. Falling back to mock explainability workspace data.');
         await new Promise(resolve => setTimeout(resolve, 800)); // Simulating network delay for skeleton

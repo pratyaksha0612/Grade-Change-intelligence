@@ -12,6 +12,7 @@ const Recommendations = lazy(() => import('./pages/Recommendations'))
 const DigitalTwin = lazy(() => import('./pages/DigitalTwin'))
 const Timeline = lazy(() => import('./pages/Timeline'))
 const DecisionIntelligence = lazy(() => import('./pages/DecisionIntelligence'))
+const CorrelationDiscovery = lazy(() => import('./pages/CorrelationDiscovery'))
 const Explainability = lazy(() => import('./pages/Explainability'))
 const KnowledgeBase = lazy(() => import('./pages/KnowledgeBase'))
 const Settings = lazy(() => import('./pages/Settings'))
@@ -38,6 +39,7 @@ function App() {
               <Route path="digital-twin" element={<DigitalTwin />} />
               <Route path="timeline" element={<Timeline />} />
               <Route path="decision" element={<DecisionIntelligence />} />
+              <Route path="correlations" element={<CorrelationDiscovery />} />
               <Route path="explainability" element={<Explainability />} />
               <Route path="knowledge-base" element={<KnowledgeBase />} />
               <Route path="settings" element={<Settings />} />

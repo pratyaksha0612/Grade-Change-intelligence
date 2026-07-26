@@ -13,11 +13,14 @@ import {
   ArrowDown,
   BrainCircuit,
   ThumbsUp,
-  FastForward,
   Scale,
-  AlertTriangle
+  AlertTriangle,
+  BarChart2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine
+} from 'recharts';
 
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -154,9 +157,39 @@ export default function Explainability() {
           </Card>
         </div>
 
-        {/* CENTER PANEL: Evidence Summary */}
-        <div className="lg:col-span-6 flex flex-col">
-          <Card className="h-full flex flex-col border-transparent   ">
+        {/* CENTER PANEL: Feature Importance & Evidence */}
+        <div className="lg:col-span-6 flex flex-col gap-6">
+          <Card className="flex flex-col border-transparent border">
+            <CardHeader className="pb-3 border-b border-transparent">
+              <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
+                <BarChart2 className="h-4 w-4 text-primary" />
+                SHAP Feature Attribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.shapValues} layout="vertical" margin={{ top: 5, right: 30, left: 80, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} opacity={0.2} />
+                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="feature" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} width={80} />
+                  <Tooltip 
+                    cursor={{fill: 'hsl(var(--muted)/0.2)'}}
+                    contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                  />
+                  <ReferenceLine x={0} stroke="hsl(var(--muted-foreground))" />
+                  <Bar dataKey="impact" radius={[0, 4, 4, 0]} barSize={16}>
+                    {
+                      data.shapValues?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.impact > 0 ? '#10B981' : '#E52222'} />
+                      ))
+                    }
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          <Card className="flex-1 flex flex-col border-transparent border">
             <CardHeader className="pb-3 border-b border-transparent">
               <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
                 <FileText className="h-4 w-4 text-primary" />
@@ -164,23 +197,17 @@ export default function Explainability() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 p-6">
-              <motion.div 
-                variants={containerVariants}
-                initial="hidden"
-                animate="show"
-                className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full"
-              >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
                 {data.evidenceSummary.map((evidence, idx) => (
-                  <motion.div 
-                    variants={{ hidden: { opacity: 0, scale: 0.95 }, show: { opacity: 1, scale: 1 } }}
+                  <div 
                     key={idx} 
-                    className="p-5 rounded-xl border border-transparent   hover:border-transparent hover:bg-primary/5 transition-all duration-300 flex flex-col group"
+                    className="p-4 rounded-xl border border-transparent bg-background/50 hover:bg-primary/5 transition-all duration-300 flex flex-col group"
                   >
-                    <h4 className="text-sm font-bold text-foreground mb-3 border-b border-transparent pb-2 group-hover:text-primary transition-colors tracking-tight">{evidence.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground mb-2 border-b border-transparent pb-1 group-hover:text-primary transition-colors tracking-tight">{evidence.title}</h4>
                     <p className="text-xs text-muted-foreground/80 leading-relaxed flex-1">{evidence.desc}</p>
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
+              </div>
             </CardContent>
           </Card>
         </div>

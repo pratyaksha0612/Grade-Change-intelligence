@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import ingestion, context, prediction, root_cause, similarity, recommendation, digital_twin, knowledge_base, timeline, decision, explainability, settings, dashboard
+from app.api.v1.endpoints import ingestion, context, prediction, root_cause, similarity, recommendation, digital_twin, knowledge_base, timeline, decision, explainability, settings, dashboard, correlations
 
 api_router = APIRouter()
 api_router.include_router(ingestion.router, prefix="/ingestion", tags=["Ingestion"])
@@ -15,3 +15,4 @@ api_router.include_router(decision.router, prefix="/decision", tags=["Decision I
 api_router.include_router(explainability.router, prefix="/explainability", tags=["Explainability"])
 api_router.include_router(settings.router, prefix="/settings", tags=["Settings"])
 api_router.include_router(dashboard.router, prefix="/dashboard", tags=["Dashboard"])
+api_router.include_router(correlations.router, prefix="/correlations", tags=["Correlations"])

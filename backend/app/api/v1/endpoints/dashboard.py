@@ -14,24 +14,18 @@ from pydantic import BaseModel
 
 router = APIRouter()
 
-# Global state for caching the CSV and simulating stream
+# Global state for simulating stream
 current_index = 0
-_df_full = None
-
-def get_cached_dataset():
-    global _df_full
-    if _df_full is None:
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-        data_path = os.path.join(os.path.dirname(base_dir), "ml", "data", "paper_machine_telemetry.csv")
-        _df_full = pd.read_csv(data_path)
-    return _df_full
 
 @router.get("/summary")
 async def get_dashboard_summary():
     global current_index
+    from app.services.dataset_cache import DatasetCache
     
     try:
-        df_full = get_cached_dataset()
+        df_full = DatasetCache.get_df()
+        if df_full.empty:
+            raise Exception("Dataset is empty")
     except Exception as e:
         return {"error": f"Dataset could not be loaded. Error: {str(e)}"}
         
