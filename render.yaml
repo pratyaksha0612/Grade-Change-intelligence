@@ -22,7 +22,7 @@ services:
     name: gci-frontend
     env: static
     rootDir: frontend
-    buildCommand: "npm install && npm run build"
+    buildCommand: "npm install && npx vite build"
     staticPublishPath: dist
     envVars:
       - key: NODE_VERSION
