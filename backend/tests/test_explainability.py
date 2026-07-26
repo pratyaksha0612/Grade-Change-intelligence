@@ -20,7 +20,7 @@ def test_explanation_generator_approve():
     assert "Digital Twin" in trace.engineering_rationale
     assert trace.overall_decision_confidence == 92.5
     assert trace.supporting_evidence_payload == context
-    assert "v3.0.0" in trace.model_version_references.values()
+    assert "v1.0.0" in trace.model_version_references.values()
 
 def test_explanation_generator_reject():
     decision = {

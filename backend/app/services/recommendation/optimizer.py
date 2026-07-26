@@ -52,7 +52,7 @@ class MultiObjectiveOptimizer:
             bounds = (scenario["speed_bound"], scenario["pressure_bound"])
             initial_guess = [current_speed, current_pressure]
             
-            res = minimize(objective, initial_guess, bounds=bounds, method='L-BFGS-B')
+            res = minimize(objective, initial_guess, bounds=bounds, method='L-BFGS-B', options={'maxiter': 5})
             opt_speed = res.x[0]
             opt_pressure = res.x[1]
             

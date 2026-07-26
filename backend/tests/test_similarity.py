@@ -59,4 +59,4 @@ def test_similarity_ranker():
     ranked_low = SimilarityRanker.rank_matches([match3])
     conf_low = SimilarityRanker.calculate_confidence(ranked_low)
     # Penalized by 0.8
-    assert conf_low == 0.75 * 0.8
+    assert conf_low == pytest.approx(0.75 * 0.8)

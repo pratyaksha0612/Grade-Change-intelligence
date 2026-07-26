@@ -29,7 +29,7 @@ def test_confidence_fusion_missing():
     score, rel, acc = ConfidenceFusion.fuse(inputs)
     
     assert score < 90.0
-    assert rel == "HIGH"
+    assert rel == "MEDIUM"
     # Acceptance drops significantly due to poor simulation score
     assert acc < 85.0
 

@@ -19,7 +19,14 @@ def test_process_response_predictor():
     # The last point should be very close to 150.0
     assert abs(scenario.trajectory[-1].basis_weight - 150.0) < 1.0
 
-def test_process_response_predictor_failure():
+def test_process_response_predictor_failure(monkeypatch):
+    class MockModelFailure:
+        def predict(self, df):
+            return [160.0]
+            
+    from app.services.prediction.model_loader import model_loader
+    monkeypatch.setattr(model_loader, "model", MockModelFailure())
+
     setpoints = {"Steam_Pressure_Group_2": 460.0} # Will trigger failure in mock
     context = {
         "features": {"basis_weight_pv": 155.0},
