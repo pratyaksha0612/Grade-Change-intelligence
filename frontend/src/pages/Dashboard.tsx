@@ -180,7 +180,7 @@ export default function Dashboard() {
                 </div>
                 <div className="bg-background p-3 rounded border border-border/50 text-center">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-widest block mb-1">Adjustment</span>
-                  <span className="font-semibold text-lg text-green-500">{data.recommendation.adjustment > 0 ? `+${data.recommendation.adjustment}` : data.recommendation.adjustment} FPM</span>
+                  <span className="font-semibold text-lg text-green-500">{(data.recommendation.adjustment ?? 0) > 0 ? `+${data.recommendation.adjustment}` : (data.recommendation.adjustment ?? 0)} FPM</span>
                 </div>
               </div>
             </div>
