@@ -37,3 +37,4 @@ services:
           envVarKey: RENDER_EXTERNAL_URL
 
 # Note: For Vite, VITE_API_URL will be injected at build time by Render.
+# Trigger sync 2
