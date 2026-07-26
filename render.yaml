@@ -22,7 +22,7 @@ services:
     name: gci-frontend
     env: static
     rootDir: frontend
-    buildCommand: "npm install && npx vite build"
+    buildCommand: "npm install && npm run build"
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL

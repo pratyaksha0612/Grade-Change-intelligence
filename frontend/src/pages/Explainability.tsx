@@ -102,7 +102,7 @@ export default function Explainability() {
             </div>
             <div className="mt-2 flex space-x-2 items-center">
               <StatusBadge variant="success" className="bg-green-500/20 text-green-500 border border-green-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]">AUDIT TRAIL VERIFIED</StatusBadge>
-              <StatusBadge variant="outline" className="border-transparent bg-background/50">
+              <StatusBadge variant="outline" className="border-border shadow-sm bg-background/50">
                 <Server className="h-3 w-3 mr-1 text-muted-foreground" />
                 {data.coreVersion}
               </StatusBadge>
@@ -116,8 +116,8 @@ export default function Explainability() {
         
         {/* LEFT PANEL: Decision Trace */}
         <div className="lg:col-span-3">
-          <Card className="h-full border-transparent   ">
-            <CardHeader className="pb-4 border-b border-transparent">
+          <Card className="h-full border-border shadow-sm   ">
+            <CardHeader className="pb-4 border-b border-border shadow-sm">
               <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
                 <GitPullRequest className="h-4 w-4 text-primary" />
                 Decision Trace
@@ -136,16 +136,16 @@ export default function Explainability() {
                       className="relative flex items-start mb-6 last:mb-0 group"
                     >
                       <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 shrink-0 z-10 mr-4 transition-colors
-                        ${step.isFinal ? 'bg-primary border-primary text-primary-foreground shadow-[0_0_15px_rgba(229,34,34,0.4)]' : 'bg-background border-transparent text-primary group-hover:border-primary'}
+                        ${step.isFinal ? 'bg-primary border-primary text-primary-foreground shadow-[0_0_15px_rgba(229,34,34,0.4)]' : 'bg-background border-border shadow-sm text-primary group-hover:border-primary'}
                       `}>
                         <Icon className={step.isFinal ? "h-4 w-4" : "h-3.5 w-3.5"} />
                       </div>
-                      <div className={`pt-1 w-full ${step.isFinal ? 'bg-primary/10 p-4 -mt-3 rounded-lg border border-transparent shadow-[0_4px_20px_-5px_rgba(229,34,34,0.15)]' : ''}`}>
+                      <div className={`pt-1 w-full ${step.isFinal ? 'bg-primary/10 p-4 -mt-3 rounded-lg border border-border shadow-sm shadow-[0_4px_20px_-5px_rgba(229,34,34,0.15)]' : ''}`}>
                         <div className="flex items-center justify-between mb-1">
                           <p className={`text-sm font-bold tracking-tight ${step.isFinal ? 'text-primary' : 'text-foreground'}`}>
                             {step.name}
                           </p>
-                          <span className="text-xs text-muted-foreground font-mono tracking-wider bg-background/50 border border-transparent px-1.5 py-0.5 rounded">{step.time}</span>
+                          <span className="text-xs text-muted-foreground font-mono tracking-wider bg-background/50 border border-border shadow-sm px-1.5 py-0.5 rounded">{step.time}</span>
                         </div>
                         <p className={`text-xs leading-relaxed ${step.isFinal ? 'text-foreground/90 font-medium' : 'text-muted-foreground/80'}`}>{step.desc}</p>
                       </div>
@@ -159,8 +159,8 @@ export default function Explainability() {
 
         {/* CENTER PANEL: Feature Importance & Evidence */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <Card className="flex flex-col border-transparent border">
-            <CardHeader className="pb-3 border-b border-transparent">
+          <Card className="flex flex-col border-border shadow-sm border">
+            <CardHeader className="pb-3 border-b border-border shadow-sm">
               <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
                 <BarChart2 className="h-4 w-4 text-primary" />
                 SHAP Feature Attribution
@@ -189,8 +189,8 @@ export default function Explainability() {
             </CardContent>
           </Card>
 
-          <Card className="flex-1 flex flex-col border-transparent border">
-            <CardHeader className="pb-3 border-b border-transparent">
+          <Card className="flex-1 flex flex-col border-border shadow-sm border">
+            <CardHeader className="pb-3 border-b border-border shadow-sm">
               <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
                 <FileText className="h-4 w-4 text-primary" />
                 Evidence Summary
@@ -201,9 +201,9 @@ export default function Explainability() {
                 {data.evidenceSummary.map((evidence, idx) => (
                   <div 
                     key={idx} 
-                    className="p-4 rounded-xl border border-transparent bg-background/50 hover:bg-primary/5 transition-all duration-300 flex flex-col group"
+                    className="p-4 rounded-xl border border-border shadow-sm bg-background/50 hover:bg-primary/5 transition-all duration-300 flex flex-col group"
                   >
-                    <h4 className="text-sm font-bold text-foreground mb-2 border-b border-transparent pb-1 group-hover:text-primary transition-colors tracking-tight">{evidence.title}</h4>
+                    <h4 className="text-sm font-bold text-foreground mb-2 border-b border-border shadow-sm pb-1 group-hover:text-primary transition-colors tracking-tight">{evidence.title}</h4>
                     <p className="text-xs text-muted-foreground/80 leading-relaxed flex-1">{evidence.desc}</p>
                   </div>
                 ))}
@@ -214,8 +214,8 @@ export default function Explainability() {
 
         {/* RIGHT PANEL: Audit Information */}
         <div className="lg:col-span-3 space-y-8">
-          <Card className="h-full border-transparent   ">
-            <CardHeader className="pb-3 border-b border-transparent">
+          <Card className="h-full border-border shadow-sm   ">
+            <CardHeader className="pb-3 border-b border-border shadow-sm">
               <CardTitle className="flex items-center gap-2 text-sm uppercase tracking-wide">
                 <Database className="h-4 w-4 text-primary" />
                 Audit Metadata
@@ -230,32 +230,32 @@ export default function Explainability() {
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-transparent">
+              <div className="pt-3 border-t border-border shadow-sm">
                 <span className="text-sm text-muted-foreground uppercase tracking-widest font-semibold block mb-1">Engineering Rationale</span>
                 <p className="text-xs text-muted-foreground/80 leading-relaxed">
                   {data.engineeringRationale}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-transparent flex justify-between items-center">
+              <div className="pt-3 border-t border-border shadow-sm flex justify-between items-center">
                 <span className="text-sm text-muted-foreground uppercase tracking-widest font-semibold">Safety Validation</span>
                 <span className={`text-xs font-bold flex items-center px-2 py-1 rounded ${data.safetyValidation === 'PASSED' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-gci-amber/10 text-gci-amber border border-gci-amber/20'}`}>
                   <ShieldCheck className="h-3 w-3 mr-1" /> {data.safetyValidation}
                 </span>
               </div>
 
-              <div className="pt-3 border-t border-transparent">
+              <div className="pt-3 border-t border-border shadow-sm">
                 <span className="text-sm text-muted-foreground uppercase tracking-widest font-semibold block mb-2">Supporting Evidence</span>
                 <div className="flex flex-col gap-1.5">
                   {data.supportingEvidence.map((doc, idx) => (
-                    <span key={idx} className="text-sm font-mono bg-background/50 border border-transparent p-1.5 rounded inline-block w-full text-foreground/80">{doc}</span>
+                    <span key={idx} className="text-sm font-mono bg-background/50 border border-border shadow-sm p-1.5 rounded inline-block w-full text-foreground/80">{doc}</span>
                   ))}
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-transparent">
+              <div className="pt-3 border-t border-border shadow-sm">
                 <span className="text-sm text-muted-foreground uppercase tracking-widest font-semibold block mb-2">Audit Hash (SHA-256)</span>
-                <p className="text-xs font-mono break-all bg-background/50 border border-transparent p-2.5 rounded text-muted-foreground/70">
+                <p className="text-xs font-mono break-all bg-background/50 border border-border shadow-sm p-2.5 rounded text-muted-foreground/70">
                   {data.auditHash}
                 </p>
               </div>
@@ -266,8 +266,8 @@ export default function Explainability() {
       </div>
 
       {/* --- BOTTOM SECTION: Decision Audit Table --- */}
-      <Card className="border-transparent  ">
-        <CardHeader className="border-b border-transparent">
+      <Card className="border-border shadow-sm  ">
+        <CardHeader className="border-b border-border shadow-sm">
           <CardTitle className="text-xs uppercase tracking-wide font-semibold text-muted-foreground">Decision Audit Table</CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
