@@ -20,7 +20,7 @@ services:
         value: "mocked"
 
   # Frontend React (Vite) Static Site
-  - type: static
+  - type: web
     name: gci-frontend
     env: static
     rootDir: frontend
