@@ -1,0 +1,81 @@
+syntax = "proto3";
+package gci.explainability;
+
+option go_package = "github.com/honeywell/gci/proto/explainability";
+option java_package = "com.honeywell.gci.proto.explainability";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+import "prediction.proto";
+import "optimization.proto";
+
+// Level 1: Operator-facing plain language summary
+message OperatorSummary {
+    string risk_headline         = 1;
+    string primary_driver        = 2;
+    string recommended_action    = 3;
+    string expected_outcome      = 4;
+    string confidence_statement  = 5;
+    gci.common.RiskLevel risk_level = 6;
+    int32 risk_score             = 7;
+}
+
+// Historical comparison entry
+message HistoricalComparison {
+    string transition_id         = 1;
+    string occurred_date         = 2;
+    double similarity_score      = 3;
+    string outcome_summary       = 4;
+    double max_deviation_pct     = 5;
+    double stabilization_sec     = 6;
+}
+
+// Level 2: Engineering detail
+message EngineeringDetail {
+    repeated gci.prediction.FeatureAttribution feature_contributions = 1;
+    repeated HistoricalComparison historical_comparisons              = 2;
+    gci.optimization.ConstraintReport constraint_analysis             = 3;
+    gci.optimization.TrajectoryForecast trajectory_with_recommendation = 4;
+    gci.optimization.TrajectoryForecast trajectory_without_recommendation = 5;
+}
+
+// Level 3: Full audit record
+message AuditRecord {
+    string record_id             = 1;
+    google.protobuf.Timestamp timestamp = 2;
+    string model_versions_json   = 3;
+    string input_features_json   = 4;
+    string output_json           = 5;
+    string explanation_json      = 6;
+}
+
+// Complete advisory payload delivered to operator HMI
+message AdvisoryPayload {
+    string advisory_id                   = 1;
+    string transition_id                 = 2;
+    google.protobuf.Timestamp created_at = 3;
+
+    gci.prediction.DeviationForecast forecast                    = 4;
+    gci.optimization.SetpointRecommendation recommendation       = 5;
+
+    OperatorSummary operator_summary     = 6;
+    EngineeringDetail engineering_detail = 7;
+    AuditRecord audit_record             = 8;
+}
+
+// Explainability service definition
+service ExplainabilityService {
+    rpc GenerateAdvisory (GenerateAdvisoryRequest) returns (AdvisoryPayload);
+    rpc StreamAdvisory (StreamAdvisoryRequest) returns (stream AdvisoryPayload);
+    rpc HealthCheck (gci.common.HealthCheckRequest) returns (gci.common.HealthCheckResponse);
+}
+
+message GenerateAdvisoryRequest {
+    string transition_id = 1;
+    string forecast_id   = 2;
+    string recommendation_id = 3;
+}
+
+message StreamAdvisoryRequest {
+    string transition_id = 1;
+}

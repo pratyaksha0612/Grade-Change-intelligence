@@ -1,0 +1,61 @@
+syntax = "proto3";
+package gci.ingestion;
+
+option go_package = "github.com/honeywell/gci/proto/ingestion";
+option java_package = "com.honeywell.gci.proto.ingestion";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+// Normalized feature vector — canonical data unit flowing through the pipeline
+message FeatureVector {
+    google.protobuf.Timestamp timestamp = 1;
+    string machine_id                   = 2;
+
+    // Process variables (SI units)
+    double stock_flow_pv        = 3;
+    double stock_flow_sp        = 4;
+    double filler_flow_pv       = 5;
+    double filler_flow_sp       = 6;
+    double steam_pressure_pv    = 7;
+    double steam_pressure_sp    = 8;
+    double machine_speed_pv     = 9;
+    double machine_speed_sp     = 10;
+
+    // Quality variables
+    double basis_weight         = 11;
+    double moisture             = 12;
+    double ash_content          = 13;
+    double caliper              = 14;
+
+    // Extensible additional tags
+    map<string, double> additional_tags = 15;
+
+    // Data quality metadata
+    gci.common.QualityFlags quality_flags = 16;
+    int32 anomaly_score         = 17;
+}
+
+// Ingestion service definition
+service IngestionService {
+    rpc StreamFeatures (StreamFeaturesRequest) returns (stream FeatureVector);
+    rpc GetHistoricalFeatures (HistoricalFeaturesRequest) returns (HistoricalFeaturesResponse);
+    rpc HealthCheck (gci.common.HealthCheckRequest) returns (gci.common.HealthCheckResponse);
+}
+
+message StreamFeaturesRequest {
+    string machine_id  = 1;
+    int32  buffer_size = 2;
+}
+
+message HistoricalFeaturesRequest {
+    string machine_id = 1;
+    google.protobuf.Timestamp start_time = 2;
+    google.protobuf.Timestamp end_time   = 3;
+    int32 sample_rate_ms = 4;
+}
+
+message HistoricalFeaturesResponse {
+    repeated FeatureVector features = 1;
+    int32 total_count = 2;
+}

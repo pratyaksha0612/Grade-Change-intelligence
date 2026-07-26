@@ -1,0 +1,125 @@
+# GCI Platform — Kafka Topic Configuration
+# Used by the deployment pipeline to create/configure topics
+
+topics:
+  - name: "gci.raw_data"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 86400000          # 24 hours
+    cleanup_policy: "delete"
+    compression_type: "lz4"
+    description: "Raw process data from edge gateways (per machine)"
+    per_machine: true               # Creates gci.raw_data.{machine_id}
+
+  - name: "gci.normalized"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 259200000         # 72 hours
+    cleanup_policy: "delete"
+    compression_type: "lz4"
+    description: "Normalized feature vectors from ingestion service"
+    per_machine: true
+
+  - name: "gci.transitions"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Transition context events from context engine"
+
+  - name: "gci.predictions"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Deviation forecasts from prediction engine"
+
+  - name: "gci.recommendations"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Setpoint recommendations from optimization engine"
+
+  - name: "gci.advisories"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Advisory payloads for frontend WebSocket relay"
+
+  - name: "gci.feedback"
+    partitions: 1
+    replication_factor: 3
+    retention_ms: -1                # Infinite retention
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Operator feedback records"
+
+  - name: "gci.alerts"
+    partitions: 1
+    replication_factor: 3
+    retention_ms: 604800000         # 7 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "System alerts from all services"
+
+  - name: "gci.dead-letter"
+    partitions: 1
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Dead letter queue for failed message processing"
+
+  # === Enhancement Module Topics (v2.0) ===
+
+  - name: "gci.simulations"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Digital Twin simulation results and scenario comparisons (M9)"
+    note: "Phase 2; stores SimulationResult and ScenarioComparison for audit and M5 consumption"
+
+  - name: "gci.confidence"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Confidence reports from the Confidence Engine (M10)"
+    note: "Phase 1 (prediction-only), Phase 2 (all 4 dimensions)"
+
+  - name: "gci.similarity"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Historical similarity reports from the Similarity Engine (M11)"
+    note: "Phase 1; emitted on each transition detection event"
+
+  - name: "gci.root-cause"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Root cause ranking reports from the Root Cause Engine (M12)"
+    note: "Phase 1; emitted on each prediction cycle"
+
+  - name: "gci.timeline"
+    partitions: 3
+    replication_factor: 3
+    retention_ms: 2592000000        # 30 days
+    cleanup_policy: "delete"
+    compression_type: "snappy"
+    description: "Transition timeline predictions from the Timeline Predictor (M13)"
+    note: "Phase 2; updated every 5 seconds during active transition"
+

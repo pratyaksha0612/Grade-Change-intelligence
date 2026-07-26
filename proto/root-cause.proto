@@ -1,0 +1,91 @@
+syntax = "proto3";
+
+package gci.rootcause;
+
+option go_package = "gci/proto/rootcause";
+
+import "common.proto";
+
+// =============================================================================
+// M12: Root Cause Ranking Engine Service
+// Transforms raw SHAP values from M3 (Prediction Engine) into ranked,
+// engineering-contextualized root cause explanations. Each factor includes
+// contribution percentage, direction, deviation context, and actionability.
+// =============================================================================
+
+service RootCauseService {
+    // Get ranked root causes for a specific prediction
+    rpc GetRootCauseRanking (RootCauseRequest) returns (RootCauseReport);
+
+    // Get root cause trends over a transition's lifecycle
+    rpc GetRootCauseTrend (RootCauseTrendRequest) returns (RootCauseTrendResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Request Messages
+// ---------------------------------------------------------------------------
+
+message RootCauseRequest {
+    string transition_id            = 1;
+    string forecast_id              = 2;   // Reference to M3's prediction
+    int32 max_factors               = 3;   // Max ranked factors to return (default: 5)
+    double min_contribution_pct     = 4;   // Min contribution to include (default: 3.0%)
+}
+
+message RootCauseTrendRequest {
+    string transition_id            = 1;
+    int32 last_n_predictions        = 2;   // How many recent prediction cycles to include
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+message RootCauseReport {
+    string report_id                        = 1;
+    string transition_id                    = 2;
+    string forecast_id                      = 3;
+    repeated RootCauseFactor ranked_factors  = 4;   // Ordered by contribution (descending)
+    string summary_sentence                 = 5;   // e.g., "BW deviation primarily driven by aggressive steam ramp (38%) and elevated stock flow (23%)"
+    double total_explained_pct              = 6;   // Sum of all factor contributions (should be ~100%)
+    gci.common.Timestamp computed_at        = 7;
+}
+
+message RootCauseFactor {
+    int32  rank                     = 1;    // 1-indexed rank
+    string variable_name            = 2;    // Canonical name (e.g., "steam_pressure_ramp_rate")
+    string display_name             = 3;    // Human-readable (e.g., "Steam Pressure Ramp Rate")
+    double contribution_pct         = 4;    // Percentage contribution to deviation prediction
+    double shap_value               = 5;    // Raw SHAP value
+
+    // Direction & magnitude
+    string direction                = 6;    // "INCREASING_RISK" | "DECREASING_RISK"
+    string direction_symbol         = 7;    // "↑" | "↓"
+
+    // Current state vs. normal
+    double current_value            = 8;
+    double normal_range_low         = 9;
+    double normal_range_high        = 10;
+    double deviation_from_normal    = 11;   // Absolute deviation from nearest range bound
+    double deviation_pct            = 12;   // Percentage deviation from normal midpoint
+
+    // Engineering context
+    string engineering_context      = 13;   // e.g., "Ramp rate exceeds typical profile; dryer may over-respond"
+    string engineering_unit         = 14;   // e.g., "kPa/s"
+
+    // Actionability
+    string actionability            = 15;   // "ACTIONABLE" | "OBSERVABLE" | "CONTEXTUAL" | "NOISE"
+    bool   has_setpoint             = 16;   // Whether the operator can directly adjust this variable
+    string suggested_action         = 17;   // e.g., "Reduce ramp rate to 6 kPa/s" (only for ACTIONABLE)
+}
+
+message RootCauseTrendResponse {
+    string transition_id                    = 1;
+    repeated RootCauseTrendEntry entries    = 2;
+}
+
+message RootCauseTrendEntry {
+    gci.common.Timestamp timestamp          = 1;
+    string forecast_id                      = 2;
+    repeated RootCauseFactor ranked_factors  = 3;
+}

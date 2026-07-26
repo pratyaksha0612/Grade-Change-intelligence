@@ -1,0 +1,70 @@
+# GCI Platform — Logging Configuration
+# Shared across all microservices
+
+version: 1
+disable_existing_loggers: false
+
+formatters:
+  standard:
+    format: "%(asctime)s [%(levelname)s] %(name)s [%(correlation_id)s] - %(message)s"
+    datefmt: "%Y-%m-%dT%H:%M:%S%z"
+  json:
+    class: "pythonjsonlogger.jsonlogger.JsonFormatter"
+    format: "%(asctime)s %(levelname)s %(name)s %(correlation_id)s %(message)s"
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: standard
+    stream: ext://sys.stdout
+
+  file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: json
+    filename: /var/log/gci/service.log
+    maxBytes: 104857600  # 100 MB
+    backupCount: 5
+
+  logstash:
+    class: logstash.TCPLogstashHandler
+    level: INFO
+    host: logstash.gci-monitoring.svc.cluster.local
+    port: 5044
+    version: 1
+
+loggers:
+  gci:
+    level: INFO
+    handlers: [console, file, logstash]
+    propagate: false
+
+  gci.ingestion:
+    level: INFO
+  gci.context:
+    level: INFO
+  gci.prediction:
+    level: INFO
+  gci.optimization:
+    level: INFO
+  gci.explainability:
+    level: INFO
+  gci.feedback:
+    level: INFO
+  gci.knowledge:
+    level: INFO
+  gci.mlops:
+    level: INFO
+
+  # External library logging
+  kafka:
+    level: WARNING
+  grpc:
+    level: WARNING
+  onnxruntime:
+    level: WARNING
+
+root:
+  level: WARNING
+  handlers: [console]

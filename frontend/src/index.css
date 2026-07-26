@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Helvetica Neue", Helvetica, Arial, "Honeywell Sans", sans-serif;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 240 5% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 5% 10%;
+ 
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 5% 10%;
+ 
+    --primary: 0 79% 52%; /* Red */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 240 5% 10%;
+ 
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 10% 45%;
+ 
+    --accent: 0 79% 45%; /* Darker Red */
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 90%;
+    --input: 220 13% 90%;
+    --ring: 0 79% 52%; /* Red ring */
+ 
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    /* Honeywell Red & Charcoal Theme */
+    --background: 0 0% 4%; /* Deep Charcoal #0A0A0A */
+    --foreground: 210 20% 98%;
+ 
+    --card: 0 0% 7%; /* Darker Charcoal #121212 */
+    --card-foreground: 210 20% 98%;
+ 
+    --popover: 0 0% 7%;
+    --popover-foreground: 210 20% 98%;
+ 
+    --primary: 0 79% 52%; /* Honeywell Red #E52222 */
+    --primary-foreground: 0 0% 100%;
+ 
+    --secondary: 0 0% 12%; /* Raised Charcoal */
+    --secondary-foreground: 210 20% 98%;
+ 
+    --muted: 0 0% 12%;
+    --muted-foreground: 215 15% 60%;
+ 
+    --accent: 0 79% 45%; /* Darker Red */
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 350 80% 60%;
+    --destructive-foreground: 0 0% 100%;
+ 
+    --border: 0 0% 15%; /* Subtle milled edge */
+    --input: 0 0% 15%;
+    --ring: 0 79% 52%; /* Red ring */
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+/* Global scrollbar concealment while preserving scroll logic */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+/* Subtle thin scrollbar - visible on hover, nearly invisible at rest */
+*::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}
+
+html, body, #root {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+
+@keyframes scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}

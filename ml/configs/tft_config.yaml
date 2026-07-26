@@ -1,0 +1,87 @@
+# Temporal Fusion Transformer (TFT) — Training Configuration
+# GradeChange Intelligence Platform — Prediction Engine (Module 3)
+
+model:
+  name: "gci-tft"
+  version: "1.0.0"
+  description: "Multi-horizon BW forecasting during grade transitions"
+
+data:
+  # Input window
+  encoder_length: 300        # seconds of historical data (300 = 5 minutes)
+  decoder_length: 120        # seconds of prediction horizon
+  prediction_horizons: [30, 60, 90, 120]  # specific horizons to evaluate
+
+  # Features
+  time_varying_known:        # Known future inputs (setpoints)
+    - stock_flow_sp
+    - filler_flow_sp
+    - steam_pressure_sp
+    - machine_speed_sp
+
+  time_varying_unknown:      # Observed variables (measured)
+    - stock_flow_pv
+    - filler_flow_pv
+    - steam_pressure_pv
+    - machine_speed_pv
+    - basis_weight
+    - moisture
+    - ash_content
+    - caliper
+
+  static_categoricals:       # Static context features
+    - source_grade_id
+    - target_grade_id
+    - shift
+    - machine_section
+
+  static_reals:
+    - recipe_difficulty_score
+    - transitions_today
+
+  target: "basis_weight"
+
+  # Data splits
+  train_fraction: 0.70
+  val_fraction: 0.15
+  test_fraction: 0.15
+  min_transitions: 500
+  split_strategy: "temporal"  # Never leak future data
+
+training:
+  max_epochs: 100
+  batch_size: 64
+  learning_rate: 0.001
+  gradient_clip_val: 0.1
+  early_stopping:
+    monitor: "val_loss"
+    patience: 10
+    mode: "min"
+  scheduler:
+    type: "reduce_on_plateau"
+    factor: 0.5
+    patience: 5
+
+architecture:
+  hidden_size: 64
+  attention_head_size: 4
+  dropout: 0.1
+  hidden_continuous_size: 32
+  lstm_layers: 2
+  output_quantiles: [0.1, 0.5, 0.9]
+
+export:
+  format: "onnx"
+  opset_version: 17
+  optimize: true
+  output_path: "models/tft/latest.onnx"
+
+evaluation:
+  metrics:
+    - mae
+    - rmse
+    - mape
+    - quantile_loss
+  thresholds:
+    mae_max: 1.5          # g/m² — maximum acceptable MAE
+    rmse_max: 2.0         # g/m²

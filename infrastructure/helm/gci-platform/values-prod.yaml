@@ -1,0 +1,140 @@
+# GCI Platform — Helm Values (Production)
+# Override defaults for production deployment
+
+global:
+  environment: production
+  imageRegistry: harbor.honeywell.local/gci
+  imagePullPolicy: Always
+  logLevel: WARN
+
+# === Ingestion Service ===
+ingestion:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+  config:
+    kafkaBootstrapServers: "kafka.gci-system:9092"
+    redisHost: "redis.gci-system"
+    timescaledbHost: "timescaledb.gci-system"
+
+# === Context Service ===
+context:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# === Prediction Service ===
+prediction:
+  replicaCount: 3
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+  gpu:
+    enabled: true
+    type: "nvidia.com/gpu"
+    count: 1
+  config:
+    onnxRuntimeProviders: "CUDAExecutionProvider,CPUExecutionProvider"
+
+# === Optimization Service ===
+optimization:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+  gpu:
+    enabled: true
+    type: "nvidia.com/gpu"
+    count: 1
+
+# === Explainability Service ===
+explainability:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# === Feedback Service ===
+feedback:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1Gi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+
+# === Knowledge Service ===
+knowledge:
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "1"
+      memory: "2Gi"
+    limits:
+      cpu: "2"
+      memory: "4Gi"
+
+# === MLOps Service ===
+mlops:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "2"
+      memory: "4Gi"
+    limits:
+      cpu: "4"
+      memory: "8Gi"
+  gpu:
+    enabled: true
+    type: "nvidia.com/gpu"
+    count: 1
+  persistence:
+    size: "500Gi"
+    storageClass: "fast-ssd"
+
+# === Monitoring ===
+monitoring:
+  prometheus:
+    enabled: true
+    retention: "30d"
+  grafana:
+    enabled: true
+  alerting:
+    pagerduty:
+      enabled: true
+      serviceKey: "VAULT_REF:gci/pagerduty/service-key"
+
+# === Security ===
+security:
+  tls:
+    enabled: true
+    issuer: "honeywell-enterprise-ca"
+  oauth:
+    issuerUrl: "https://auth.honeywell.com/realms/gci"
+    clientId: "gci-platform"
+  rbac:
+    enabled: true

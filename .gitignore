@@ -1,0 +1,95 @@
+# GradeChange Intelligence — .gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment variables
+.env
+.env.local
+.env.production
+*.env
+
+# Logs
+logs/
+*.log
+
+# ML artifacts
+ml/data/raw/*
+ml/data/processed/*
+ml/data/splits/*
+!ml/data/raw/.gitkeep
+!ml/data/processed/.gitkeep
+!ml/data/splits/.gitkeep
+*.onnx
+*.pt
+*.pth
+*.pkl
+*.joblib
+mlruns/
+mlartifacts/
+
+# Node.js
+node_modules/
+frontend/dist/
+frontend/build/
+.next/
+*.tsbuildinfo
+
+# Docker
+*.pid
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+
+# Kubernetes
+*.kubeconfig
+
+# MinIO
+.minio.sys/
+
+# Secrets
+*.pem
+*.key
+*.crt
+*.p12
+vault-token
+
+# Parquet / data files
+*.parquet
+*.h5
+*.hdf5
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/

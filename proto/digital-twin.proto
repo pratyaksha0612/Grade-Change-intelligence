@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package gci.digitaltwin;
+
+option go_package = "gci/proto/digitaltwin";
+
+import "common.proto";
+
+// =============================================================================
+// M9: Digital Twin Service
+// Simulates the paper machine during grade transitions using a Neural ODE
+// surrogate model. Evaluates what-if scenarios, validates recommendations,
+// and provides trajectory comparisons.
+// =============================================================================
+
+service DigitalTwinService {
+    // Simulate a single scenario with specified setpoint adjustments
+    rpc SimulateScenario (SimulateRequest) returns (SimulationResult);
+
+    // Compare multiple scenarios side-by-side (baseline vs recommended vs custom)
+    rpc CompareScenarios (CompareRequest) returns (ScenarioComparison);
+
+    // Validate a recommendation from M4 before delivery to operator
+    rpc ValidateRecommendation (ValidateRequest) returns (ValidationReport);
+
+    // Parametric sweep: evaluate a variable across a range (engineer mode)
+    rpc ParametricSweep (SweepRequest) returns (SweepResult);
+}
+
+// ---------------------------------------------------------------------------
+// Request Messages
+// ---------------------------------------------------------------------------
+
+message SimulateRequest {
+    string transition_id           = 1;  // Current transition context ID
+    ProcessState current_state     = 2;  // Current process state vector
+    repeated SetpointAdjustment adjustments = 3;  // Setpoint changes to simulate
+    int32 horizon_seconds          = 4;  // Simulation horizon (default: 300s)
+    int32 time_step_seconds        = 5;  // Output resolution (default: 1s)
+    string scenario_label          = 6;  // Human-readable label (e.g., "AI Recommended")
+}
+
+message CompareRequest {
+    string transition_id           = 1;
+    ProcessState current_state     = 2;
+    repeated SimulateRequest scenarios = 3;  // 2–5 scenarios to compare
+    bool include_baseline          = 4;      // Auto-add a "no intervention" baseline
+}
+
+message ValidateRequest {
+    string transition_id           = 1;
+    ProcessState current_state     = 2;
+    string recommendation_id       = 3;     // Reference to M4's recommendation
+    repeated SetpointAdjustment recommended_setpoints = 4;
+    repeated ProcessConstraint constraints = 5;  // From M7 Knowledge Base
+}
+
+message SweepRequest {
+    string transition_id           = 1;
+    ProcessState current_state     = 2;
+    string sweep_variable          = 3;     // Variable to sweep (e.g., "steam_pressure_sp")
+    double sweep_min_pct           = 4;     // Min adjustment (e.g., -5.0 for -5%)
+    double sweep_max_pct           = 5;     // Max adjustment (e.g., +5.0 for +5%)
+    int32 sweep_steps              = 6;     // Number of sweep points (default: 11)
+    int32 horizon_seconds          = 7;
+}
+
+// ---------------------------------------------------------------------------
+// Data Types
+// ---------------------------------------------------------------------------
+
+message ProcessState {
+    double basis_weight            = 1;
+    double moisture                = 2;
+    double ash_content             = 3;
+    double caliper                 = 4;
+    double stock_flow_pv           = 5;
+    double stock_flow_sp           = 6;
+    double filler_flow_pv          = 7;
+    double filler_flow_sp          = 8;
+    double steam_pressure_pv       = 9;
+    double steam_pressure_sp       = 10;
+    double machine_speed_pv        = 11;
+    double machine_speed_sp        = 12;
+    gci.common.Timestamp timestamp = 13;
+}
+
+message SetpointAdjustment {
+    string variable_name           = 1;     // Canonical name (e.g., "steam_pressure_sp")
+    double new_value               = 2;     // Absolute new setpoint value
+    double ramp_rate               = 3;     // Rate of change (units/sec); 0 = step change
+    string engineering_unit        = 4;
+}
+
+message ProcessConstraint {
+    string variable_name           = 1;
+    double hard_min                = 2;
+    double hard_max                = 3;
+    double soft_min                = 4;
+    double soft_max                = 5;
+    double max_ramp_rate           = 6;
+    string constraint_type         = 7;     // "SAFETY" | "EQUIPMENT" | "QUALITY" | "OPERATIONAL"
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+message SimulationResult {
+    string simulation_id           = 1;
+    string scenario_label          = 2;
+    repeated TrajectoryPoint trajectory = 3;  // Time-series of predicted process state
+    SimulationMetrics metrics      = 4;
+    double simulation_confidence   = 5;       // From Monte Carlo Dropout (0.0–1.0)
+    string validation_status       = 6;       // "PASS" | "FAIL" | "WARN"
+    string model_version           = 7;       // Neural ODE model version used
+    gci.common.Timestamp computed_at = 8;
+}
+
+message TrajectoryPoint {
+    int32 time_offset_sec          = 1;       // Seconds from simulation start
+    double basis_weight            = 2;
+    double moisture                = 3;
+    double ash_content             = 4;
+    double caliper                 = 5;
+    double bw_deviation_pct        = 6;       // % deviation from target
+}
+
+message SimulationMetrics {
+    double max_bw_deviation_pct    = 1;       // Peak BW deviation during simulation
+    double stabilization_time_sec  = 2;       // Time to reach <1% BW deviation for 30+ sec
+    double total_off_spec_time_sec = 3;       // Total time BW exceeds ±2.5%
+    double energy_cost_proxy       = 4;       // ∫|ΔSteamPressure| dt
+    double aggressiveness_score    = 5;       // Composite measure of setpoint change magnitude
+}
+
+message ScenarioComparison {
+    string transition_id           = 1;
+    repeated SimulationResult scenarios = 2;
+    string best_scenario_label     = 3;       // Label of the top-ranked scenario
+    repeated ScenarioRankEntry ranking = 4;   // Ordered ranking with composite scores
+}
+
+message ScenarioRankEntry {
+    string scenario_label          = 1;
+    double composite_score         = 2;       // 0.50×deviation + 0.30×stabilization + 0.20×aggressiveness
+    double deviation_score         = 3;
+    double stabilization_score     = 4;
+    double aggressiveness_score    = 5;
+}
+
+message ValidationReport {
+    string recommendation_id       = 1;
+    bool passes_hard_constraints   = 2;
+    bool trajectory_converges      = 3;
+    bool physically_plausible      = 4;
+    string overall_verdict         = 5;       // "PASS" | "FAIL" | "WARN"
+    repeated ConstraintViolation violations = 6;
+    SimulationResult simulated_outcome = 7;
+    string failure_reason          = 8;       // Empty if PASS
+}
+
+message ConstraintViolation {
+    string variable_name           = 1;
+    string constraint_type         = 2;
+    double violated_value          = 3;
+    double limit_value             = 4;
+    string description             = 5;
+}
+
+message SweepResult {
+    string transition_id           = 1;
+    string sweep_variable          = 2;
+    repeated SweepPoint points     = 3;
+    string optimal_value_label     = 4;       // Label of the best sweep point
+}
+
+message SweepPoint {
+    double adjustment_pct          = 1;
+    double absolute_value          = 2;
+    SimulationMetrics metrics      = 3;
+    double simulation_confidence   = 4;
+    string validation_status       = 5;
+}

@@ -1,0 +1,111 @@
+# Neural ODE — Training Configuration
+# GradeChange Intelligence Platform — Optimization Engine (Module 4)
+
+model:
+  name: "gci-neural-ode"
+  version: "1.0.0"
+  description: "Process surrogate model (digital twin) for paper machine dynamics"
+
+data:
+  # State variables (quality outputs)
+  state_variables:
+    - name: basis_weight
+      unit: "g/m²"
+      normalization: "min_max"
+    - name: moisture
+      unit: "%"
+      normalization: "min_max"
+    - name: ash_content
+      unit: "%"
+      normalization: "min_max"
+    - name: caliper
+      unit: "μm"
+      normalization: "min_max"
+
+  # Control inputs (manipulated variables)
+  control_inputs:
+    - name: stock_flow_sp
+      unit: "kg/min"
+      normalization: "min_max"
+    - name: filler_flow_sp
+      unit: "kg/min"
+      normalization: "min_max"
+    - name: steam_pressure_sp
+      unit: "kPa"
+      normalization: "min_max"
+    - name: machine_speed_sp
+      unit: "m/min"
+      normalization: "min_max"
+
+  # Training data
+  sequence_length: 300         # seconds per trajectory sample
+  prediction_horizon: 120      # seconds to predict forward
+  sample_rate_sec: 1
+  min_transitions: 500
+  split_strategy: "temporal"
+
+training:
+  max_epochs: 200
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 0.0001
+
+  # ODE solver configuration
+  ode_solver: "dopri5"         # Dormand-Prince (adaptive step)
+  rtol: 1e-4                   # Relative tolerance
+  atol: 1e-5                   # Absolute tolerance
+  max_num_steps: 1000          # Maximum ODE solver steps
+
+  # Physics-informed regularization
+  physics_regularization:
+    enabled: true
+    mass_balance_weight: 0.1    # Penalize mass balance violations
+    energy_balance_weight: 0.1  # Penalize energy balance violations
+    monotonicity_weight: 0.05   # Penalize non-physical sign changes
+
+  early_stopping:
+    monitor: "val_trajectory_mse"
+    patience: 20
+    mode: "min"
+
+  # Stability safeguards
+  gradient_clip_val: 1.0
+  derivative_clip: 10.0        # Max |dx/dt| to prevent divergence
+
+architecture:
+  # ODE function network: f(x, u, t) -> dx/dt
+  ode_func:
+    hidden_layers: [128, 128, 64]
+    activation: "softplus"      # Smooth, positive; better for ODE dynamics
+    dropout: 0.0                # No dropout in ODE function (deterministic dynamics)
+
+  # Encoder: maps initial state to latent space
+  encoder:
+    hidden_layers: [64, 32]
+    activation: "relu"
+
+  # Decoder: maps latent state back to physical state
+  decoder:
+    hidden_layers: [32, 64]
+    activation: "relu"
+
+  latent_dim: 16               # Dimensionality of latent ODE state
+
+export:
+  format: "onnx"
+  opset_version: 17
+  optimize: true
+  output_path: "models/neural_ode/latest.onnx"
+  # Note: ONNX export of Neural ODE requires fixed-step Euler solver
+  onnx_solver: "euler"
+  onnx_dt: 1.0                # Fixed time step for ONNX (seconds)
+
+evaluation:
+  metrics:
+    - trajectory_mse
+    - trajectory_mae
+    - max_deviation_error
+    - stabilization_time_error
+  thresholds:
+    trajectory_mae_max: 0.5    # g/m² average trajectory error
+    max_deviation_error_max: 1.0  # g/m² error on peak deviation

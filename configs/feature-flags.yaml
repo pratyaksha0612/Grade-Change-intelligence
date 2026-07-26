@@ -1,0 +1,231 @@
+# GCI Platform — Feature Flags
+# Controls feature rollout and A/B experiments
+
+flags:
+  # === Prediction Engine ===
+  prediction.tft_enabled:
+    description: "Enable Temporal Fusion Transformer for BW forecasting"
+    default: true
+    environments:
+      dev: true
+      staging: true
+      prod: true
+
+  prediction.lgbm_enabled:
+    description: "Enable LightGBM deviation risk classifier"
+    default: true
+
+  prediction.conformal_enabled:
+    description: "Enable Conformal Prediction for calibrated confidence intervals"
+    default: true
+
+  prediction.shap_enabled:
+    description: "Enable SHAP feature attribution computation"
+    default: true
+    note: "Can be disabled to reduce latency by ~25ms if budget is tight"
+
+  # === Optimization Engine ===
+  optimization.enabled:
+    description: "Enable setpoint optimization recommendations"
+    default: false
+    note: "Disabled by default; enable after Phase 3 validation"
+    environments:
+      dev: true
+      staging: true
+      prod: false
+
+  optimization.neural_ode_surrogate:
+    description: "Use Neural ODE surrogate model (vs. lookup table fallback)"
+    default: true
+
+  optimization.nsga3_enabled:
+    description: "Use NSGA-III optimizer (vs. single-objective fallback)"
+    default: true
+
+  optimization.what_if_enabled:
+    description: "Enable What-If simulation for engineers"
+    default: true
+
+  # === Explainability ===
+  explainability.historical_comparison:
+    description: "Include historical transition comparison in explanations"
+    default: true
+
+  explainability.audit_logging:
+    description: "Write full audit records for every advisory (21 CFR Part 11)"
+    default: true
+    note: "Required for regulated environments; disable only for dev"
+
+  # === Feedback & Learning ===
+  feedback.online_learning:
+    description: "Enable online model updates from operator feedback"
+    default: false
+    note: "Enable after Phase 4 validation; requires careful monitoring"
+
+  feedback.contextual_bandit:
+    description: "Enable contextual bandit for recommendation strategy selection"
+    default: false
+
+  feedback.ab_testing:
+    description: "Enable champion/challenger A/B testing framework"
+    default: false
+
+  # === Data Pipeline ===
+  ingestion.anomaly_detection:
+    description: "Enable Isolation Forest anomaly pre-filtering on incoming data"
+    default: true
+
+  ingestion.imputation_model_based:
+    description: "Use model-based imputation (vs. last-known-good fallback)"
+    default: false
+    note: "Experimental; requires trained imputation model"
+
+  # === Infrastructure ===
+  inference.gpu_enabled:
+    description: "Use GPU for TFT and Neural ODE inference"
+    default: false
+    environments:
+      dev: false
+      staging: false
+      prod: true
+
+  monitoring.drift_alerting:
+    description: "Enable automated drift detection alerts"
+    default: true
+
+  # === Enhancement Modules (v2.0) ===
+
+  # --- M9: Digital Twin ---
+  digital_twin.enabled:
+    description: "Enable Digital Twin simulation engine"
+    default: false
+    note: "Phase 2; requires trained Neural ODE surrogate model"
+    environments:
+      dev: true
+      staging: true
+      prod: false
+
+  digital_twin.validation_gate:
+    description: "Require all M4 recommendations to pass M9 validation before delivery"
+    default: true
+    note: "Safety gate; should remain enabled once Digital Twin is active"
+
+  digital_twin.parametric_sweep:
+    description: "Enable parametric sweep for engineering console"
+    default: true
+    note: "Computationally expensive; may be disabled if latency budget is tight"
+
+  digital_twin.max_scenarios:
+    description: "Maximum number of scenarios per CompareScenarios call"
+    default: 5
+
+  # --- M10: Confidence Engine ---
+  confidence.enabled:
+    description: "Enable Confidence Engine composite scoring"
+    default: true
+    environments:
+      dev: true
+      staging: true
+      prod: true
+
+  confidence.prediction_only:
+    description: "Use prediction confidence only (Phase 1 mode); disable to enable all 4 dimensions"
+    default: true
+    note: "Set to false after M9 and M11 are deployed (Phase 2)"
+
+  confidence.display_breakdown:
+    description: "Show per-dimension confidence breakdown in HMI (vs. composite only)"
+    default: true
+
+  confidence.insufficient_threshold:
+    description: "Composite score below which trust level is INSUFFICIENT"
+    default: 0.50
+
+  # --- M11: Historical Similarity Engine ---
+  similarity.enabled:
+    description: "Enable Historical Similarity Engine (KNN-DTW)"
+    default: true
+    environments:
+      dev: true
+      staging: true
+      prod: true
+
+  similarity.top_k:
+    description: "Number of historical matches to return"
+    default: 5
+
+  similarity.min_threshold:
+    description: "Minimum similarity score to include in results"
+    default: 0.50
+
+  similarity.dtw_fast_mode:
+    description: "Use FastDTW approximation (O(N) vs O(N²)) for large datasets"
+    default: true
+    note: "Trades ~2% accuracy for 10× speed improvement on >10k transitions"
+
+  # --- M12: Root Cause Ranking Engine ---
+  root_cause.enabled:
+    description: "Enable Root Cause Ranking Engine (SHAP attribution)"
+    default: true
+    environments:
+      dev: true
+      staging: true
+      prod: true
+
+  root_cause.actionability_classification:
+    description: "Enable actionability tagging (ACTIONABLE/OBSERVABLE/CONTEXTUAL/NOISE)"
+    default: true
+
+  root_cause.engineering_context:
+    description: "Enrich root causes with engineering context from M7 Knowledge Base"
+    default: true
+
+  root_cause.max_factors:
+    description: "Maximum number of ranked factors to display"
+    default: 5
+
+  # --- M13: Transition Timeline Predictor ---
+  timeline.enabled:
+    description: "Enable Transition Timeline Predictor"
+    default: false
+    note: "Phase 2; requires M3 + at least one of M9 or M11 to be active"
+    environments:
+      dev: true
+      staging: true
+      prod: false
+
+  timeline.update_interval_sec:
+    description: "How often to recompute timeline during active transition"
+    default: 5
+
+  timeline.survival_analysis:
+    description: "Use Kaplan-Meier + Cox PH survival model for time-to-stabilization"
+    default: true
+    note: "Falls back to historical mean if survival model is not trained"
+
+  # --- E7: Smart Operator Feedback Safeguards ---
+  feedback.smart_safeguards:
+    description: "Enable 4-gate feedback validation pipeline"
+    default: false
+    note: "Phase 3; enable after accumulating 3+ months of feedback data"
+    environments:
+      dev: true
+      staging: true
+      prod: false
+
+  feedback.engagement_check:
+    description: "Gate 1: Detect habitual clicking (response time < 3s)"
+    default: true
+
+  feedback.consistency_check:
+    description: "Gate 2: Detect contradictory feedback on similar scenarios"
+    default: true
+
+  feedback.outcome_verification:
+    description: "Gate 3: Validate feedback against actual transition outcome"
+    default: true
+
+  feedback.min_weight_threshold:
+    description: "Minimum feedback weight for inclusion in retraining data"
+    default: 0.30
+

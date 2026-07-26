@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package gci.timeline;
+
+option go_package = "gci/proto/timeline";
+
+import "common.proto";
+
+// =============================================================================
+// M13: Transition Timeline Predictor Service
+// Predicts the forward-looking schedule of a grade transition: when each phase
+// will occur, when quality will stabilize, and estimated product outcomes.
+// Combines M3 trajectory forecasts, M9 simulations, and M11 historical data.
+// =============================================================================
+
+service TimelineService {
+    // Predict the transition timeline (one-shot)
+    rpc PredictTimeline (TimelineRequest) returns (TransitionTimeline);
+
+    // Subscribe to live timeline updates (server-streaming)
+    rpc SubscribeTimeline (TimelineSubscribeRequest) returns (stream TransitionTimeline);
+}
+
+// ---------------------------------------------------------------------------
+// Request Messages
+// ---------------------------------------------------------------------------
+
+message TimelineRequest {
+    string transition_id                    = 1;
+    string forecast_id                      = 2;   // Reference to M3's latest prediction
+    string simulation_id                    = 3;   // Reference to M9's latest simulation (optional)
+    string similarity_report_id             = 4;   // Reference to M11's similarity report (optional)
+}
+
+message TimelineSubscribeRequest {
+    string transition_id                    = 1;
+    int32 update_interval_sec               = 2;   // How often to push updates (default: 5)
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+message TransitionTimeline {
+    string timeline_id                              = 1;
+    string transition_id                            = 2;
+
+    // Phase schedule
+    repeated TimelinePhase phases                   = 3;
+    string current_phase                            = 4;   // Which phase we're currently in
+
+    // Time predictions
+    double estimated_total_time_sec                 = 5;   // Total transition duration
+    double confidence_interval_sec                  = 6;   // ± uncertainty on total time
+    double time_elapsed_sec                         = 7;   // Time since transition start
+    double time_remaining_sec                       = 8;   // Estimated remaining time
+
+    // Quality predictions
+    double on_spec_probability                      = 9;   // Probability of on-spec outcome (0.0–1.0)
+    double estimated_offgrade_sec                   = 10;  // Expected off-grade production time
+    double peak_deviation_pct                       = 11;  // Expected maximum BW deviation
+
+    // Trajectory
+    DeviationTrajectory predicted_trajectory         = 12;
+
+    // Data source weights (transparency)
+    TimelineSourceWeights source_weights            = 13;
+
+    // Status
+    string progress_status                          = 14;  // "ON_TRACK" | "BEHIND" | "AHEAD" | "AT_RISK"
+    string progress_message                         = 15;  // e.g., "Running 15s behind expected schedule"
+
+    gci.common.Timestamp computed_at                = 16;
+}
+
+message TimelinePhase {
+    string phase_name               = 1;   // "RAMPING" | "PEAK" | "RECOVERY" | "STABILIZING" | "COMPLETE"
+    double start_time_sec           = 2;   // Predicted start (seconds from transition start)
+    double end_time_sec             = 3;   // Predicted end
+    double predicted_bw_at_start    = 4;   // Expected BW value at phase start
+    double predicted_bw_at_end      = 5;   // Expected BW value at phase end
+    double max_deviation_in_phase   = 6;   // Maximum expected deviation within this phase
+    string status                   = 7;   // "COMPLETED" | "CURRENT" | "UPCOMING"
+    string description              = 8;   // e.g., "Setpoints ramping to target grade values"
+    string risk_assessment          = 9;   // "SAFE" | "WARNING" | "BREACH_RISK" for this phase
+}
+
+message DeviationTrajectory {
+    repeated TrajectoryDataPoint points     = 1;
+    double target_bw                        = 2;   // Target Basis Weight
+    double upper_limit_pct                  = 3;   // +2.5%
+    double lower_limit_pct                  = 4;   // -2.5%
+}
+
+message TrajectoryDataPoint {
+    double time_offset_sec                  = 1;
+    double predicted_bw                     = 2;
+    double predicted_deviation_pct          = 3;
+    double confidence_upper                 = 4;   // Upper confidence bound
+    double confidence_lower                 = 5;   // Lower confidence bound
+}
+
+message TimelineSourceWeights {
+    double prediction_weight                = 1;   // Weight of M3 forecast in timeline computation
+    double simulation_weight                = 2;   // Weight of M9 simulation
+    double historical_weight                = 3;   // Weight of M11 historical data
+    string note                             = 4;   // e.g., "Simulation data unavailable; using M3+M11 only"
+}

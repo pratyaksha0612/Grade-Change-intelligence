@@ -1,0 +1,90 @@
+syntax = "proto3";
+package gci.context;
+
+option go_package = "github.com/honeywell/gci/proto/context";
+option java_package = "com.honeywell.gci.proto.context";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+import "ingestion.proto";
+
+// Historical transition reference
+message HistoricalTransition {
+    string transition_id                  = 1;
+    google.protobuf.Timestamp occurred_at = 2;
+    gci.common.GradeSpec source_grade     = 3;
+    gci.common.GradeSpec target_grade     = 4;
+    double stabilization_time_sec         = 5;
+    double max_bw_deviation_pct           = 6;
+    bool   was_successful                 = 7;
+    double similarity_score               = 8;
+    string operator_id                    = 9;
+    string outcome_summary                = 10;
+}
+
+// Alarm state snapshot
+message AlarmState {
+    int32   active_alarm_count   = 1;
+    int32   critical_alarm_count = 2;
+    repeated AlarmRecord recent_alarms = 3;
+}
+
+message AlarmRecord {
+    google.protobuf.Timestamp timestamp = 1;
+    string tag_name     = 2;
+    string description  = 3;
+    string priority     = 4;
+    string status       = 5;
+}
+
+// Scanner health status
+message ScannerHealth {
+    bool   is_online                  = 1;
+    bool   is_calibrated              = 2;
+    double last_calibration_age_hours = 3;
+    string scanner_model              = 4;
+    repeated string active_faults     = 5;
+}
+
+// Complete transition context
+message TransitionContext {
+    string transition_id                    = 1;
+    string machine_id                       = 2;
+    gci.common.TransitionPhase phase        = 3;
+    google.protobuf.Timestamp initiated_at  = 4;
+
+    gci.common.GradeSpec source_grade       = 5;
+    gci.common.GradeSpec target_grade       = 6;
+    gci.common.RecipeLimits recipe_limits   = 7;
+
+    repeated HistoricalTransition top_k_matches = 8;
+    AlarmState current_alarms               = 9;
+    ScannerHealth scanner_status            = 10;
+
+    repeated gci.ingestion.FeatureVector recent_window = 11;
+
+    double recipe_difficulty_score          = 12;
+    int32  transitions_today                = 13;
+    string current_shift                    = 14;
+    string operator_id                      = 15;
+}
+
+// Context service definition
+service ContextService {
+    rpc GetActiveTransition (ActiveTransitionRequest) returns (TransitionContext);
+    rpc SubscribeTransitions (SubscribeRequest) returns (stream TransitionContext);
+    rpc GetTransition (GetTransitionRequest) returns (TransitionContext);
+    rpc HealthCheck (gci.common.HealthCheckRequest) returns (gci.common.HealthCheckResponse);
+}
+
+message ActiveTransitionRequest {
+    string machine_id = 1;
+}
+
+message SubscribeRequest {
+    string machine_id = 1;
+}
+
+message GetTransitionRequest {
+    string transition_id = 1;
+}

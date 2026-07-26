@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package gci.confidence;
+
+option go_package = "gci/proto/confidence";
+
+import "common.proto";
+
+// =============================================================================
+// M10: Confidence Engine Service
+// Aggregates multi-dimensional confidence metrics from M3 (Prediction),
+// M4 (Recommendation), M9 (Simulation), and M11 (Historical Similarity)
+// into a unified, calibrated trust score for operator consumption.
+// =============================================================================
+
+service ConfidenceService {
+    // Compute composite confidence for a prediction+recommendation cycle
+    rpc ComputeConfidence (ConfidenceRequest) returns (ConfidenceReport);
+
+    // Retrieve historical confidence scores for a transition
+    rpc GetConfidenceHistory (ConfidenceHistoryRequest) returns (ConfidenceHistoryResponse);
+}
+
+// ---------------------------------------------------------------------------
+// Request Messages
+// ---------------------------------------------------------------------------
+
+message ConfidenceRequest {
+    string transition_id                    = 1;
+    string forecast_id                      = 2;   // Reference to M3's prediction
+    string recommendation_id                = 3;   // Reference to M4's recommendation (optional)
+    PredictionConfidenceInput prediction    = 4;   // From M3
+    RecommendationConfidenceInput recommendation = 5; // From M4 (optional in Phase 1)
+    SimulationConfidenceInput simulation    = 6;   // From M9 (optional in Phase 1)
+    HistoricalConfidenceInput historical    = 7;   // From M11
+}
+
+message ConfidenceHistoryRequest {
+    string transition_id                    = 1;
+    int32 max_records                       = 2;   // Default: 50
+}
+
+// ---------------------------------------------------------------------------
+// Confidence Input Dimensions
+// ---------------------------------------------------------------------------
+
+message PredictionConfidenceInput {
+    double conformal_interval_width         = 1;   // Width of 90% conformal prediction interval
+    double probability_margin               = 2;   // Distance from 0.5 decision boundary
+    double attention_entropy                = 3;   // TFT attention weight entropy
+    double feature_completeness             = 4;   // Fraction of non-imputed features (0.0–1.0)
+}
+
+message RecommendationConfidenceInput {
+    double pareto_spread                    = 1;   // Std dev of objectives across Pareto candidates
+    double min_constraint_margin            = 2;   // Minimum margin to any active constraint
+    double surrogate_uncertainty            = 3;   // Monte Carlo Dropout variance on Neural ODE
+    double convergence_rate                 = 4;   // NSGA-III hypervolume convergence rate
+}
+
+message SimulationConfidenceInput {
+    double baseline_vs_actual_rmse          = 1;   // RMSE between simulated baseline and actual
+    double monte_carlo_variance             = 2;   // Variance across N=20 stochastic passes
+    bool   trajectory_converges             = 3;   // Whether simulated trajectory converges
+    string operating_region                 = 4;   // "INSIDE_HULL" | "MARGINAL" | "OUTSIDE_HULL"
+}
+
+message HistoricalConfidenceInput {
+    double best_similarity_score            = 1;   // DTW similarity of best match (0.0–1.0)
+    double outcome_variance                 = 2;   // Variance of outcomes across top-K matches
+    int32  sample_size                      = 3;   // Number of matches with similarity > 0.7
+    int32  best_match_age_days              = 4;   // Recency of most recent high-similarity match
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+message ConfidenceReport {
+    string confidence_id                    = 1;
+    string transition_id                    = 2;
+    string forecast_id                      = 3;
+
+    // Dimension scores (0.0–1.0)
+    double prediction_confidence            = 4;
+    double recommendation_confidence        = 5;
+    double historical_confidence            = 6;
+    double simulation_confidence            = 7;
+
+    // Composite
+    double composite_confidence             = 8;
+    string trust_level                      = 9;   // "HIGH" | "MEDIUM" | "LOW" | "INSUFFICIENT"
+
+    // Interpretability
+    string limiting_factor                  = 10;  // Which dimension is lowest + explanation
+    repeated ConfidenceFactor factors       = 11;  // Breakdown of individual signals
+    string operator_guidance                = 12;  // Action recommendation based on trust level
+
+    // Metadata
+    gci.common.Timestamp computed_at        = 13;
+    int32 dimensions_available              = 14;  // How many of 4 dimensions had data (Phase 1: 2, Phase 2: 4)
+}
+
+message ConfidenceFactor {
+    string dimension                        = 1;   // "PREDICTION" | "RECOMMENDATION" | "SIMULATION" | "HISTORICAL"
+    string signal_name                      = 2;   // e.g., "conformal_interval_width"
+    double raw_value                        = 3;
+    double normalized_value                 = 4;   // After normalization (0.0–1.0)
+    double weight                           = 5;   // Weight in composite calculation
+    string interpretation                   = 6;   // e.g., "Narrow interval indicates high model certainty"
+}
+
+message ConfidenceHistoryResponse {
+    string transition_id                    = 1;
+    repeated ConfidenceReport history       = 2;
+}

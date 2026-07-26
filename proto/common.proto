@@ -1,0 +1,78 @@
+syntax = "proto3";
+package gci.common;
+
+option go_package = "github.com/honeywell/gci/proto/common";
+option java_package = "com.honeywell.gci.proto.common";
+
+import "google/protobuf/timestamp.proto";
+
+// Quality flags for sensor data validation
+message QualityFlags {
+    bool is_valid           = 1;
+    bool is_frozen          = 2;
+    bool is_imputed         = 3;
+    bool is_anomalous       = 4;
+    string imputation_method = 5;
+}
+
+// Grade specification
+message GradeSpec {
+    string grade_id             = 1;
+    string grade_name           = 2;
+    double target_basis_weight  = 3;
+    double target_moisture      = 4;
+    double target_ash           = 5;
+    double target_caliper       = 6;
+}
+
+// Recipe control limits
+message RecipeLimits {
+    double bw_upper_pct       = 1;
+    double bw_lower_pct       = 2;
+    double moisture_upper     = 3;
+    double moisture_lower     = 4;
+    double ash_upper          = 5;
+    double ash_lower          = 6;
+    double caliper_upper_pct  = 7;
+    double caliper_lower_pct  = 8;
+}
+
+// Risk levels
+enum RiskLevel {
+    RISK_UNKNOWN = 0;
+    RISK_SAFE    = 1;
+    RISK_WARNING = 2;
+    RISK_BREACH  = 3;
+}
+
+// Transition phases (ISA-88 aligned)
+enum TransitionPhase {
+    PHASE_IDLE        = 0;
+    PHASE_INITIATED   = 1;
+    PHASE_RAMPING     = 2;
+    PHASE_STABILIZING = 3;
+    PHASE_COMPLETE    = 4;
+    PHASE_ABORTED     = 5;
+}
+
+// Standard acknowledgment
+message Ack {
+    bool   success = 1;
+    string message = 2;
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+// Health check (gRPC health checking protocol)
+message HealthCheckRequest {
+    string service = 1;
+}
+
+message HealthCheckResponse {
+    enum ServingStatus {
+        UNKNOWN         = 0;
+        SERVING         = 1;
+        NOT_SERVING     = 2;
+        SERVICE_UNKNOWN = 3;
+    }
+    ServingStatus status = 1;
+}

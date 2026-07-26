@@ -1,0 +1,118 @@
+syntax = "proto3";
+
+package gci.similarity;
+
+option go_package = "gci/proto/similarity";
+
+import "common.proto";
+
+// =============================================================================
+// M11: Historical Similarity Engine Service
+// Searches the historical transition database using K-Nearest Neighbors with
+// Dynamic Time Warping (KNN-DTW) to find the most similar past grade changes.
+// Reports operator actions, outcomes, and key lessons for each match.
+// =============================================================================
+
+service SimilarityService {
+    // Find the top-K most similar historical transitions
+    rpc FindSimilarTransitions (SimilarityRequest) returns (SimilarityReport);
+
+    // Get full detail for a specific historical transition
+    rpc GetTransitionDetail (TransitionDetailRequest) returns (TransitionDetail);
+}
+
+// ---------------------------------------------------------------------------
+// Request Messages
+// ---------------------------------------------------------------------------
+
+message SimilarityRequest {
+    string transition_id                            = 1;   // Current transition ID
+    string source_grade                             = 2;   // e.g., "70_GSM"
+    string target_grade                             = 3;   // e.g., "90_GSM"
+    repeated TimeSeriesVariable current_trajectory  = 4;   // Last 300s of process data
+    int32 top_k                                     = 5;   // Number of matches to return (default: 5)
+    double min_similarity_threshold                 = 6;   // Minimum score to include (default: 0.5)
+    SimilarityFilterOptions filters                 = 7;   // Optional filters
+}
+
+message TransitionDetailRequest {
+    string match_transition_id                      = 1;   // Historical transition to retrieve
+}
+
+message SimilarityFilterOptions {
+    bool same_grade_pair_only                       = 1;   // Only match same source→target pair
+    int32 max_age_days                              = 2;   // Only consider transitions within N days
+    string operator_id                              = 3;   // Filter by specific operator
+    string shift                                    = 4;   // Filter by shift (DAY/NIGHT/EVENING)
+}
+
+// ---------------------------------------------------------------------------
+// Data Types
+// ---------------------------------------------------------------------------
+
+message TimeSeriesVariable {
+    string variable_name                            = 1;   // Canonical name (e.g., "basis_weight")
+    repeated double values                          = 2;   // Time-ordered values (1s resolution)
+    int32 start_offset_sec                          = 3;   // Offset from transition start
+}
+
+// ---------------------------------------------------------------------------
+// Response Messages
+// ---------------------------------------------------------------------------
+
+message SimilarityReport {
+    string transition_id                            = 1;   // Current transition
+    repeated HistoricalMatch matches                = 2;   // Top-K matches, sorted by similarity
+    double overall_historical_confidence            = 3;   // Aggregate confidence for M10
+    string pattern_summary                          = 4;   // e.g., "3 of 5 similar transitions succeeded with reduced steam ramp"
+    int32 total_candidates_searched                 = 5;   // How many transitions were evaluated
+    gci.common.Timestamp computed_at                = 6;
+}
+
+message HistoricalMatch {
+    string match_transition_id                      = 1;   // Unique historical transition ID
+    double similarity_score                         = 2;   // 0.0–1.0 (displayed as %)
+    string grade_pair                               = 3;   // e.g., "70 GSM → 90 GSM"
+    string date                                     = 4;   // ISO-8601 date
+    string operator_id                              = 5;   // Operator who handled it
+    string operator_name                            = 6;   // Display name (for HMI)
+    string shift                                    = 7;   // "DAY" | "NIGHT" | "EVENING"
+
+    // What happened
+    string operator_action                          = 8;   // Description of setpoint changes made
+    bool   was_successful                           = 9;   // Did BW stay within ±2.5%?
+    double stabilization_time_sec                   = 10;  // Seconds to reach steady state
+    double max_bw_deviation_pct                     = 11;  // Peak BW deviation during transition
+    string quality_outcome                          = 12;  // "ON_SPEC" | "OFF_SPEC" | "PARTIAL_OFF_SPEC"
+    double off_spec_time_sec                        = 13;  // Seconds of off-grade production
+
+    // Knowledge
+    string key_lesson                               = 14;  // Engineering lesson from this transition
+    repeated SetpointChange setpoint_changes        = 15;  // Specific SP changes made
+
+    // DTW details (for engineering console)
+    repeated VariableDTWScore dtw_scores            = 16;  // Per-variable DTW distances
+    double context_bonus                            = 17;  // Bonus for same grade pair/shift/season
+}
+
+message SetpointChange {
+    string variable_name                            = 1;
+    double from_value                               = 2;
+    double to_value                                 = 3;
+    string engineering_unit                          = 4;
+    double time_offset_sec                          = 5;   // When the change was made
+}
+
+message VariableDTWScore {
+    string variable_name                            = 1;
+    double dtw_distance                             = 2;
+    double weight                                   = 3;   // Variable weight in composite distance
+    double weighted_contribution                    = 4;
+}
+
+message TransitionDetail {
+    HistoricalMatch summary                         = 1;
+    repeated TimeSeriesVariable trajectories        = 2;   // Full process data for this transition
+    repeated string alarm_events                    = 3;   // Alarms during this transition
+    string operator_notes                           = 4;   // Free-text notes from operator log
+}

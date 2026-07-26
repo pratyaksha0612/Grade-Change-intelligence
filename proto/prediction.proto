@@ -1,0 +1,62 @@
+syntax = "proto3";
+package gci.prediction;
+
+option go_package = "github.com/honeywell/gci/proto/prediction";
+option java_package = "com.honeywell.gci.proto.prediction";
+
+import "google/protobuf/timestamp.proto";
+import "common.proto";
+
+// Single-horizon prediction
+message HorizonPrediction {
+    int32  horizon_seconds       = 1;
+    double predicted_bw          = 2;
+    double lower_bound           = 3;
+    double upper_bound           = 4;
+    double deviation_pct         = 5;
+    gci.common.RiskLevel risk    = 6;
+}
+
+// Feature attribution (SHAP value)
+message FeatureAttribution {
+    string feature_name          = 1;
+    string display_name          = 2;
+    double shap_value            = 3;
+    double feature_value         = 4;
+    string engineering_unit      = 5;
+    string direction             = 6;
+}
+
+// Complete deviation forecast
+message DeviationForecast {
+    string forecast_id                   = 1;
+    string transition_id                 = 2;
+    google.protobuf.Timestamp created_at = 3;
+
+    repeated HorizonPrediction horizons  = 4;
+    gci.common.RiskLevel overall_risk    = 5;
+    int32 risk_score                     = 6;
+    double confidence                    = 7;
+
+    repeated FeatureAttribution top_attributions = 8;
+
+    string model_version                 = 9;
+    string tft_model_id                  = 10;
+    string lgbm_model_id                 = 11;
+}
+
+// Prediction service definition
+service PredictionService {
+    rpc PredictDeviation (PredictRequest) returns (DeviationForecast);
+    rpc SubscribePredictions (SubscribePredictionsRequest) returns (stream DeviationForecast);
+    rpc HealthCheck (gci.common.HealthCheckRequest) returns (gci.common.HealthCheckResponse);
+}
+
+message PredictRequest {
+    string transition_id = 1;
+}
+
+message SubscribePredictionsRequest {
+    string transition_id = 1;
+    int32  interval_ms   = 2;
+}

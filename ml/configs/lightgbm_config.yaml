@@ -1,0 +1,116 @@
+# LightGBM — Training Configuration
+# GradeChange Intelligence Platform — Prediction Engine (Module 3)
+
+model:
+  name: "gci-lgbm"
+  version: "1.0.0"
+  description: "Deviation risk classification (SAFE / WARNING / BREACH)"
+
+data:
+  features:
+    # TFT forecast features (derived from TFT output)
+    tft_derived:
+      - predicted_bw_t30
+      - predicted_bw_t60
+      - predicted_bw_t90
+      - predicted_bw_t120
+      - forecast_slope_30_60       # Rate of change between horizons
+      - forecast_slope_60_90
+      - forecast_curvature         # Second derivative of forecast
+      - max_predicted_deviation    # Max |deviation| across horizons
+      - confidence_interval_width  # TFT uncertainty
+
+    # Context features
+    context:
+      - recipe_difficulty_score
+      - transitions_today
+      - time_since_last_change_min
+      - active_alarm_count
+      - critical_alarm_count
+      - scanner_health_score
+
+    # Current process state
+    process:
+      - current_bw_deviation_pct
+      - stock_flow_error           # PV - SP
+      - steam_pressure_error
+      - machine_speed_error
+      - bw_rate_of_change          # d(BW)/dt
+
+    # Categorical features
+    categorical:
+      - source_grade_id
+      - target_grade_id
+      - shift                     # DAY, EVENING, NIGHT
+      - machine_section           # WET_END, DRY_END, MIXED
+
+  target: "deviation_class"       # 0=SAFE, 1=WARNING, 2=BREACH
+  class_weights: "balanced"       # Handle class imbalance
+
+  split_strategy: "temporal"
+  min_transitions: 300
+
+training:
+  objective: "multiclass"
+  num_class: 3
+  metric: "multi_logloss"
+  boosting_type: "gbdt"
+
+  # Hyperparameter search (Optuna)
+  hyperparameter_search:
+    enabled: true
+    n_trials: 100
+    timeout_seconds: 3600
+
+    search_space:
+      n_estimators:
+        type: int
+        low: 100
+        high: 1000
+      max_depth:
+        type: int
+        low: 4
+        high: 10
+      learning_rate:
+        type: float
+        low: 0.01
+        high: 0.1
+        log: true
+      min_child_samples:
+        type: int
+        low: 10
+        high: 50
+      subsample:
+        type: float
+        low: 0.7
+        high: 1.0
+      colsample_bytree:
+        type: float
+        low: 0.7
+        high: 1.0
+      reg_alpha:
+        type: float
+        low: 0.0
+        high: 1.0
+      reg_lambda:
+        type: float
+        low: 0.0
+        high: 1.0
+
+evaluation:
+  metrics:
+    - accuracy
+    - f1_macro
+    - f1_per_class
+    - precision
+    - recall
+    - confusion_matrix
+    - roc_auc
+  thresholds:
+    f1_macro_min: 0.80
+    recall_breach_min: 0.90   # Critical: must not miss BREACH predictions
+
+explainability:
+  shap_method: "tree"          # Exact TreeSHAP
+  top_k_features: 5            # Number of top SHAP features to return
+  background_samples: 100      # For DeepSHAP (TFT) only
