@@ -8,7 +8,7 @@ import {
 import { PageHeader } from '../components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { LoadingSkeleton } from '../components/ui/LoadingSkeleton';
-import { useCorrelations, Correlation } from '../api/hooks/useCorrelations';
+import { useCorrelations, type Correlation } from '../api/hooks/useCorrelations';
 
 export default function CorrelationDiscovery() {
   const { data, isLoading, isError } = useCorrelations();
@@ -68,7 +68,7 @@ export default function CorrelationDiscovery() {
             <CardContent className="pt-6 h-[500px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-                          onClick={(data) => { if(data && data.activePayload) handleSelect(data.activePayload[0].payload) }}>
+                          onClick={(data: any) => { if(data && data.activePayload) handleSelect(data.activePayload[0].payload) }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} opacity={0.2} />
                   <XAxis type="number" domain={[-1, 1]} stroke="hsl(var(--muted-foreground))" fontSize={10} tickLine={false} axisLine={false} />
                   <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} tickLine={false} axisLine={false} width={90} />
